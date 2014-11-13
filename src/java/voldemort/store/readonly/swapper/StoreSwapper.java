@@ -64,14 +64,22 @@ public abstract class StoreSwapper {
         this.executor = executor;
     }
 
-    public void swapStoreData(String storeName, String basePath, long pushVersion) {
+    public final void swapStoreData(String storeName, String basePath, long pushVersion) {
+        swapStoreData(storeName, basePath, pushVersion, 0);
+    }
+
+    public void swapStoreData(String storeName, String basePath, long pushVersion, long staggerInSeconds) {
         List<String> fetched = invokeFetch(storeName, basePath, pushVersion);
-        invokeSwap(storeName, fetched);
+        invokeSwap(storeName, fetched, staggerInSeconds);
     }
 
     public abstract List<String> invokeFetch(String storeName, String basePath, long pushVersion);
 
-    public abstract void invokeSwap(String storeName, List<String> fetchFiles);
+    public final void invokeSwap(String storeName, List<String> fetchFiles) {
+        invokeSwap(storeName, fetchFiles, 0);
+    }
+
+    public abstract void invokeSwap(String storeName, List<String> fetchFiles, long staggerInMillis);
 
     public abstract void invokeRollback(String storeName, long pushVersion);
 
@@ -93,6 +101,10 @@ public abstract class StoreSwapper {
         parser.accepts("timeout", "http timeout for the fetch in ms")
               .withRequiredArg()
               .describedAs("timeout ms")
+              .ofType(Integer.class);
+        parser.accepts("stagger", "swap nodes serially, staggering each nodes by this many seconds")
+              .withOptionalArg()
+              .describedAs("stagger seconds")
               .ofType(Integer.class);
         parser.accepts("rollback", "Rollback store to older version");
         parser.accepts("admin", "Use admin services. Default = false");
@@ -125,6 +137,7 @@ public abstract class StoreSwapper {
         boolean useAdminServices = options.has("admin");
         boolean rollbackStore = options.has("rollback");
         Long pushVersion = (Long) options.valueOf("push-version");
+        long staggerInMillis = TimeUnit.SECONDS.toMillis(CmdUtils.valueOf(options, "stagger", Integer.valueOf(0)).longValue());
 
         String clusterStr = FileUtils.readFileToString(new File(clusterXml));
         Cluster cluster = new ClusterMapper().readCluster(new StringReader(clusterStr));
@@ -133,6 +146,7 @@ public abstract class StoreSwapper {
         AdminClient adminClient = null;
 
         DefaultHttpClient httpClient = null;
+
         if(useAdminServices) {
             adminClient = new AdminClient(cluster, new AdminClientConfig(), new ClientConfig());
             swapper = new AdminStoreSwapper(cluster, executor, adminClient, timeoutMs);
@@ -155,7 +169,7 @@ public abstract class StoreSwapper {
             if(rollbackStore) {
                 swapper.invokeRollback(storeName, pushVersion.longValue());
             } else {
-                swapper.swapStoreData(storeName, filePath, pushVersion.longValue());
+                swapper.swapStoreData(storeName, filePath, pushVersion.longValue(), staggerInMillis);
             }
             long end = System.currentTimeMillis();
             logger.info("Succeeded on all nodes in " + ((end - start) / Time.MS_PER_SECOND)
