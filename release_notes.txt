@@ -1,7 +1,11 @@
-Release 1.6.0 on 11/26/2013
+Release 1.6.0-ta.1 11/13/2014
 
 NOTE: This is an open source release! This release can be downloaded here:
-      https://github.com/voldemort/voldemort/releases
+      https://github.com/tellapart/voldemort/releases
+
+Changes made since 1.6.0:
+
+* Support staggering nodes of read-only swap
 
 Changes made since 1.5.9:
 
