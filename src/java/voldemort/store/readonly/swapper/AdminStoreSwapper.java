@@ -163,12 +163,22 @@ public class AdminStoreSwapper extends StoreSwapper {
     }
 
     @Override
-    public void invokeSwap(final String storeName, final List<String> fetchFiles) {
+    public void invokeSwap(final String storeName, final List<String> fetchFiles, long staggerInMillis) {
         // do swap
         Map<Integer, String> previousDirs = new HashMap<Integer, String>();
         HashMap<Integer, Exception> exceptions = Maps.newHashMap();
+        long delayInMillis = 0;
 
         for(int nodeId = 0; nodeId < cluster.getNumberOfNodes(); nodeId++) {
+            if (delayInMillis > 0) {
+                try {
+                    logger.info("Delaying swap for node " + nodeId + " for " + staggerInMillis + " ms");
+                    Thread.sleep(delayInMillis);
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                }
+            }
+            delayInMillis = staggerInMillis;
             try {
                 String dir = fetchFiles.get(nodeId);
                 logger.info("Attempting swap for node " + nodeId + " dir = " + dir);

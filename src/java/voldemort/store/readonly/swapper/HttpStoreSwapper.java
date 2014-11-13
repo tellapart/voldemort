@@ -173,12 +173,22 @@ public class HttpStoreSwapper extends StoreSwapper {
     }
 
     @Override
-    public void invokeSwap(final String storeName, final List<String> fetchFiles) {
+    public void invokeSwap(final String storeName, final List<String> fetchFiles, long staggerInMillis) {
         // do swap in parallel
         Map<Integer, String> previousDirs = new HashMap<Integer, String>();
         HashMap<Integer, Exception> exceptions = Maps.newHashMap();
+        long delayInMillis = 0;
 
         for(final Node node: cluster.getNodes()) {
+            if (delayInMillis > 0) {
+                try {
+                    logger.info("Delaying swap for node " + node.getId() + " for " + staggerInMillis + " ms");
+                    Thread.sleep(delayInMillis);
+                } catch (InterruptedException e) {
+                    Thread.interrupted();
+                }
+            }
+            delayInMillis = staggerInMillis;
             HttpResponse httpResponse = null;
             try {
                 String url = node.getHttpUrl() + "/" + readOnlyMgmtPath;
