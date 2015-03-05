@@ -29,8 +29,8 @@ import voldemort.versioning.Versioned;
 
 /**
  * Server-side request handler for voldemort native client protocol
- * 
- * 
+ *
+ *
  */
 public class VoldemortNativeRequestHandler extends AbstractRequestHandler implements RequestHandler {
 
@@ -246,9 +246,8 @@ public class VoldemortNativeRequestHandler extends AbstractRequestHandler implem
                     // Do nothing, let the request handler address this...
             }
 
-            // If there aren't any remaining, we've "consumed" all the bytes and
-            // thus have a complete request...
-            return !buffer.hasRemaining();
+            return true;
+
         } catch(Exception e) {
             // This could also occur if the various methods we call into
             // re-throw a corrupted value error as some other type of exception.
