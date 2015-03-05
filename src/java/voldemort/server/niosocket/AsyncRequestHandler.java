@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Mustard Grain, Inc., 2009-2010 LinkedIn, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -46,8 +46,8 @@ import voldemort.utils.ByteUtils;
  * The bulk of the complexity in this class surrounds partial reads and writes,
  * as well as determining when all the data needed for the request has been
  * read.
- * 
- * 
+ *
+ *
  * @see voldemort.server.protocol.RequestHandler
  */
 
@@ -83,11 +83,11 @@ public class AsyncRequestHandler extends SelectorManagerWorker {
         if((count = socketChannel.read(inputStream.getBuffer())) == -1)
             throw new EOFException("EOF for " + socketChannel.socket());
 
-        if(logger.isTraceEnabled())
-            traceInputBufferState("Read " + count + " bytes");
-
         if(count == 0)
             return;
+
+        if(logger.isTraceEnabled())
+            traceInputBufferState("Read " + count + " bytes");
 
         // Take note of the position after we read the bytes. We'll need it in
         // case of incomplete reads later on down the method.
@@ -335,7 +335,7 @@ public class AsyncRequestHandler extends SelectorManagerWorker {
 
     /**
      * Returns true if the request should continue.
-     * 
+     *
      * @return
      */
 
@@ -362,7 +362,9 @@ public class AsyncRequestHandler extends SelectorManagerWorker {
             // sticking the bytes in the output buffer, signaling the Selector,
             // and returning false to denote no further processing is needed.
             outputStream.getBuffer().put(ByteUtils.getBytes("ok", "UTF-8"));
+
             prepForWrite(selectionKey);
+            inputStream.getBuffer().clear();
 
             return false;
         } catch(IllegalArgumentException e) {

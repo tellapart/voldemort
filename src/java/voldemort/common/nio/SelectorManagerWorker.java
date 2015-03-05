@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Mustard Grain, Inc., 2009-2010 LinkedIn, Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -87,7 +87,7 @@ public abstract class SelectorManagerWorker implements Runnable {
 
     /**
      * Returns the nanosecond-based timestamp of when this was created.
-     * 
+     *
      * @return Nanosecond-based timestamp of creation
      */
 
@@ -179,7 +179,7 @@ public abstract class SelectorManagerWorker implements Runnable {
 
     /**
      * Flips the output buffer, and lets the Selector know we're ready to write.
-     * 
+     *
      * @param selectionKey
      */
 
@@ -187,13 +187,16 @@ public abstract class SelectorManagerWorker implements Runnable {
         if(logger.isTraceEnabled())
             traceInputBufferState("About to clear read buffer");
 
-        if(inputStream.getBuffer().capacity() >= resizeThreshold)
-            inputStream.setBuffer(ByteBuffer.allocate(socketBufferSize));
-        else
-            inputStream.getBuffer().clear();
+        inputStream.getBuffer().flip();
 
-        if(logger.isTraceEnabled())
+        if(inputStream.getBuffer().capacity() >= resizeThreshold) {
+            inputStream.getBuffer().compact();
+            inputStream.getBuffer().position(0);
+        }
+
+        if(logger.isTraceEnabled()) {
             traceInputBufferState("Cleared read buffer");
+        }
 
         outputStream.getBuffer().flip();
         selectionKey.interestOps(SelectionKey.OP_WRITE);
